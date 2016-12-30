@@ -16,6 +16,7 @@ unsigned char myID;
 int findNearestEnemyDirection(hlt::Location loc) {
     unsigned char direction = NORTH;
     int maxDistance = presentMap.width / 2;
+    int maxSearch = presentMap.width / 2;
     for (int d = 0; d < 5; d++) {
         int distance = 0;
         hlt::Location current = loc;
@@ -25,6 +26,20 @@ int findNearestEnemyDirection(hlt::Location loc) {
             current = presentMap.getLocation(current, d);
             site = presentMap.getSite(current);
         }
+
+        float priority = 0;
+        float away = 2;
+        int travelled = 0;
+        while (site.owner != myID && travelled < maxSearch) {
+            travelled++;
+            away = away * away;
+            priority = priority - (site.strength) / away + (site.production) / away;
+            current = presentMap.getLocation(current, d);
+            site = presentMap.getSite(current);
+        }
+
+        priority = priority / 5;
+        distance = distance - priority;
 
         if (distance < maxDistance) {
             direction = d;
@@ -97,7 +112,7 @@ int main() {
 
     std::cout.sync_with_stdio(0);
     getInit(myID, presentMap);
-    sendInit("MyC++Bot");
+    sendInit("TestBot");
 
     std::set<hlt::Move> moves;
 

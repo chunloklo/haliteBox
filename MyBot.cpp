@@ -9,7 +9,6 @@
 #include "hlt.hpp"
 #include "networking.hpp"
 
-int dir[5];
 hlt::GameMap presentMap;
 unsigned char myID;
 
@@ -33,7 +32,7 @@ int findNearestEnemyDirection(hlt::Location loc) {
         while (site.owner != myID && travelled < maxSearch) {
             travelled++;
             away = away * away;
-            priority = priority - (site.strength) / away + (site.production) / away;
+            priority = priority - (site.strength * 2) / away + (site.production) / away;
             current = presentMap.getLocation(current, d);
             site = presentMap.getSite(current);
         }
@@ -51,15 +50,15 @@ int findNearestEnemyDirection(hlt::Location loc) {
     return direction;
 }
 
-int maxDir(int dir[5]) {
-    int max = 0;
-    for (int i = 0; i < 5; i ++) {
-        if (dir[i] > dir[max]) {
-            max = i;
-        }
-    }
-    return max;
-}
+// int maxDir(int dir[5]) {
+//     int max = 0;
+//     for (int i = 0; i < 5; i ++) {
+//         if (dir[i] > dir[max]) {
+//             max = i;
+//         }
+//     }
+//     return max;
+// }
 
 int resistance(hlt::Site site) {
     return site.strength / 5 - site.production;
@@ -90,13 +89,17 @@ unsigned char assign_move(hlt::GameMap presentMap,
 
     unsigned char move;
     if (outer == false) {
-        if (site.strength < 5 * site.production) {
+        if (site.strength < 8 * site.production) {
             move = STILL;
         } else {
             move = findNearestEnemyDirection(location);
+
+            // if (site.strength
+            //     + presentMap.getSite(location, move).strength > 255) {
+            //     move = STILL;
+            // }
         }
-    } else {
-        dir[leastResistance] += 1;
+    } else if {
         if (presentMap.getSite(location, leastResistance).strength >= site.strength) {
             move = STILL;
         } else {
@@ -129,9 +132,6 @@ int main() {
             }
         }
 
-        for (int i = 0; i < 5; i ++) {
-            dir[i] = 0;
-        }
         sendFrame(moves);
     }
 
