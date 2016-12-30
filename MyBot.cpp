@@ -11,6 +11,7 @@
 
 hlt::GameMap presentMap;
 unsigned char myID;
+int turn;
 
 int findNearestEnemyDirection(hlt::Location loc) {
     unsigned char direction = NORTH;
@@ -32,7 +33,12 @@ int findNearestEnemyDirection(hlt::Location loc) {
         while (site.owner != myID && travelled < maxSearch) {
             travelled++;
             away = away * away;
-            priority = priority - (site.strength * 2) / away + (site.production) / away;
+            if (site.owner == 0) {
+                priority -= (site.strength) / away;
+            } else if (travelled < 1){
+                priority += (site.strength) / away;
+            }
+            priority += (site.production) / away;
             current = presentMap.getLocation(current, d);
             site = presentMap.getSite(current);
         }
@@ -60,8 +66,18 @@ int findNearestEnemyDirection(hlt::Location loc) {
 //     return max;
 // }
 
-int resistance(hlt::Site site) {
-    return site.strength / 5 - site.production;
+int priority(hlt::Site site) {
+    return site.production - site.strength / 5;
+}
+
+int calcDamage(hlt::Location location) {
+    int damage = 0;
+    for (int i = 0; i < 5; i++) {
+        if (presentMap.getSite(location, i).owner != 0
+            && presentMap.getSite(location, i).owner != myID)
+            damage += presentMap.getSite(location).strength;
+    }
+    return damage;
 }
 
 unsigned char assign_move(hlt::GameMap presentMap,
@@ -72,24 +88,54 @@ unsigned char assign_move(hlt::GameMap presentMap,
     location.y = a;
     bool outer = false;
     unsigned char leastResistance = 0;
-
+    int damage = 0;
     for (int j = 0; j < 5; j++) {
-        if (presentMap.getSite(location, j).owner != myID) {
+        if (presentMap.getSite(location, j).owner == 0) {
             if (leastResistance == 0) {
                 leastResistance = j;
             } else {
-                if (resistance(presentMap.getSite(location, leastResistance))
-                    > resistance(presentMap.getSite(location, j))) {
+                //expansion algorithm
+                if (priority(presentMap.getSite(location, leastResistance))
+                    < priority(presentMap.getSite(location, j))) {
+                    damage = priority(presentMap.getSite(location, j));
                     leastResistance = j;
                 }
+
+                //combat algorithm
+                if (calcDamage(presentMap.getLocation(location, j)) > 0) {
+                    if (damage < calcDamage(presentMap.getLocation(location, j))) {
+                        damage = calcDamage(presentMap.getLocation(location, j));
+                        leastResistance = j;
+                    }
+                }
+
+                //conquer algorithm
+
             }
             outer = true;
         }
     }
 
+
+    // int damage = 0;
+
+    // for (int j = 0; j < 5; j++) {
+    //     if (presentMap.getSite(location, j).owner != myID) {
+    //         if (leastResistance == 0) {
+    //             leastResistance = j;
+    //         } else {
+    //             if (resistance(presentMap.getSite(location, leastResistance))
+    //                 > resistance(presentMap.getSite(location, j))) {
+    //                 leastResistance = j;
+    //             }
+    //         }
+    //         outer = true;
+    //     }
+    // }
+
     unsigned char move;
     if (outer == false) {
-        if (site.strength < 8 * site.production) {
+        if (site.strength < 5 * site.production) {
             move = STILL;
         } else {
             move = findNearestEnemyDirection(location);
@@ -99,7 +145,7 @@ unsigned char assign_move(hlt::GameMap presentMap,
             //     move = STILL;
             // }
         }
-    } else if {
+    } else {
         if (presentMap.getSite(location, leastResistance).strength >= site.strength) {
             move = STILL;
         } else {
@@ -131,7 +177,7 @@ int main() {
                 }
             }
         }
-
+        turn++;
         sendFrame(moves);
     }
 

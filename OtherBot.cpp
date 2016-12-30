@@ -112,7 +112,7 @@ int main() {
 
     std::cout.sync_with_stdio(0);
     getInit(myID, presentMap);
-    sendInit("TestBot");
+    sendInit("MyC++Bot");
 
     std::set<hlt::Move> moves;
 
